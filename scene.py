@@ -18,6 +18,81 @@ class Scene:
         pass
 
 
+class StarFish(Scene):
+    def initialize(self):
+        self.fish = pygame.image.load(c.image_path("logo.png"))
+        self.fish = pygame.transform.scale(self.fish, (self.fish.get_width() * 2, self.fish.get_height() * 2))
+
+    def main(self):
+        while True:
+            dt, events = self.game.update_globals()
+            self.age += dt
+            if self.age < 0.4:
+                self.fish.set_alpha(self.age * 800)
+            elif self.age < 2.0:
+                self.fish.set_alpha(255)
+            else:
+                self.fish.set_alpha(self.fish.get_alpha() - 800 * dt)
+            if self.age > 2.8:
+                break
+
+            self.game.screen.fill(c.BLACK)
+            x = c.WINDOW_WIDTH//2 - self.fish.get_width()//2
+            y = c.WINDOW_HEIGHT//2 - self.fish.get_height()//2
+            self.game.screen.blit(self.fish, (x, y))
+            pygame.display.flip()
+
+
+class Disclaimer(Scene):
+    def initialize(self):
+        self.surf = pygame.image.load(c.image_path("disclaimer.png"))
+        self.surf = pygame.transform.scale(self.surf, (self.surf.get_width() * 2, self.surf.get_height() * 2))
+
+    def main(self):
+        while True:
+            dt, events = self.game.update_globals()
+            self.age += dt
+            if self.age < 0.4:
+                self.surf.set_alpha(self.age * 800)
+            elif self.age < 5.5:
+                self.surf.set_alpha(255)
+            else:
+                self.surf.set_alpha(self.surf.get_alpha() - 800 * dt)
+            if self.age > 6.5:
+                break
+
+            self.game.screen.fill(c.BLACK)
+            x = c.WINDOW_WIDTH//2 - self.surf.get_width()//2
+            y = c.WINDOW_HEIGHT//2 - self.surf.get_height()//2
+            self.game.screen.blit(self.surf, (x, y))
+            pygame.display.flip()
+
+
+class Title(Scene):
+    def initialize(self):
+        self.surf = pygame.image.load(c.image_path("title.png"))
+
+    def main(self):
+        while True:
+            dt, events = self.game.update_globals()
+            self.age += dt
+            if self.age < 0.4:
+                self.surf.set_alpha(self.age * 800)
+            elif self.age < 5.5:
+                self.surf.set_alpha(255)
+
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        return
+
+            self.game.screen.fill(c.BLACK)
+            x = c.WINDOW_WIDTH//2 - self.surf.get_width()//2
+            y = c.WINDOW_HEIGHT//2 - self.surf.get_height()//2
+            self.game.screen.blit(self.surf, (x, y))
+            pygame.display.flip()
+
+
 class Intro(Scene):
 
     def initialize(self):
@@ -38,7 +113,7 @@ class Intro(Scene):
                 self.game.text_box.add_line("As a lost traveler, you must be in need of guidance.")
                 self.game.text_box.add_line("You can call me r/ Parity. /r")
                 self.game.text_box.add_line("I serve as a peacekeeper of sorts, purging this world of... irregularities.")
-                self.game.text_box.add_line("There are many hazards about that warrant protection.")
+                self.game.text_box.add_line("This place is home to many hazards that warrant protection.")
                 self.game.text_box.add_line("Let me acquaint you with a single byte of r/ corruption. /r")
                 self.phase = 1
             if self.phase == 1 and self.game.text_box.done():
@@ -101,7 +176,13 @@ class Level1(Scene):
         self.game.text_box.add_line("Once I've corrupted your core, I can absorb your processing power and bolster my own strength.")
         self.game.text_box.add_line("Do try to flee... it only adds to the fun.")
 
+        self.game.load_hedroid_music()
+        self.game.set_music_volume(0.2)
+
     def wave_1(self):
+        self.game.set_music_volume(1.0)
+        self.game.background = self.game.caves
+        self.game.background.fade_in()
         period = 1.0
         for i in range(4):
             direction = c.DIRECTIONS[i % 4]
@@ -193,10 +274,12 @@ class Level1(Scene):
                 self.wave_2()
             if len(self.game.enemies) == 0 and self.phase == 5:
                 self.game.text_box.add_line("i am defeat")
+                self.game.background.fade_out()
                 for item in self.game.characters:
                     item.target_alpha = -300
                 self.phase = 6
             if self.game.text_box.done() and self.phase == 6:
+                self.game.fade_out_music(500)
                 break
 
 
@@ -213,6 +296,9 @@ class Level2(Scene):
         self.game.text_box.add_line("Prepare yourself. This is for your own good.")
 
     def wave1(self):
+        self.game.background = self.game.ruins
+        self.game.background.fade_in()
+        self.game.set_music_volume(1.0)
         period = 0.5
         distance = 1
         self.game.enemies.append(FastEnemy(self.game, distance, c.LEFT))
@@ -288,11 +374,17 @@ class Level2(Scene):
     def main(self):
         self.phase = 0
         self.game.player.has_shield = True
+        music_has_started = False
         while True:
             dt, events = self.game.update_globals()
 
             self.game.update_main_game_objects(dt, events)
             self.game.draw_main_game_objects(self.game.screen)
+
+            if len(self.game.text_box.lines) < 7 and not music_has_started:
+                self.game.load_warden_music()
+                self.game.set_music_volume(0.15)
+                music_has_started = True
 
             if self.game.text_box.done() and self.phase == 0:
                 self.phase = 1

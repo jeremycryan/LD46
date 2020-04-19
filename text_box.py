@@ -20,7 +20,8 @@ class TextBox:
         self.width = 500
         self.height = 140
         self.surf = pygame.Surface((self.width, self.height))
-        self.surf.fill((30, 30, 30))
+        self.surf.fill((255, 255, 255))
+        self.surf.set_alpha(25)
         self.x = c.WINDOW_WIDTH//2
         self.y = c.WINDOW_HEIGHT - self.height//2 - 50
         self.active_character = None

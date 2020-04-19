@@ -163,6 +163,7 @@ class Feint(Enemy):
         self.drop_period /= 4
         self.gap = 120
         self.pause_distance = 500
+        self.angle = 0
 
     def get_xy(self):
         if self.distance < self.gap:
@@ -177,6 +178,39 @@ class Feint(Enemy):
         x = int(self.game.player.x + xoff)
         y = int(self.game.player.y + yoff)
         return x, y
+
+    def update(self, dt, events):
+        super().update(dt, events)
+        self.angle += 250 * dt
+        self.angle %= 360
+
+    def draw(self, surface):
+        x, y = self.get_xy()
+        x, y = self.jitter(x, y)
+        x, y = self.game.xy_transform(x, y)
+
+        if x < -200 or x > c.WINDOW_WIDTH + 200 or y < -200 or y > c.WINDOW_HEIGHT + 200:
+            return
+
+        lighter = [min(255, item + 50) for item in self.color]
+        glow_rad = int(25 * self.shine)
+        glow = pygame.Surface((glow_rad * 2, glow_rad * 2))
+        pygame.draw.circle(glow, self.color, (glow_rad, glow_rad), glow_rad)
+        glow.set_colorkey(c.BLACK)
+        glow.set_alpha(100 * self.shine)
+        surface.blit(glow, (x - glow_rad, y - glow_rad))
+
+        pygame.draw.circle(surface, lighter, (x, y), int(7 + 2 * self.shine))
+
+        w = 10
+        surf = pygame.Surface((w, w))
+        surf.fill(c.BLACK)
+        surf.set_colorkey(c.BLACK)
+        pygame.draw.rect(surf, c.WHITE, (1, 1, w-2, w-2))
+        surf = pygame.transform.rotate(surf, self.angle)
+        x -= surf.get_width()//2
+        y -= surf.get_height()//2
+        surface.blit(surf, (x, y))
 
 
 class Speedy(Enemy):

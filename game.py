@@ -7,6 +7,7 @@ from player import Player
 from enemy import Enemy, FastEnemy
 from scene import *
 from text_box import TextBox
+from background import *
 
 
 class Game:
@@ -35,6 +36,10 @@ class Game:
         self.flash.fill(c.WHITE)
         self.flash.set_alpha(0)
 
+        self.caves = Caves(self)
+        self.ruins = Ruins(self)
+        self.background = self.caves
+
         self.load_audio()
 
     def load_audio(self):
@@ -45,15 +50,32 @@ class Game:
         self.parity_speech = pygame.mixer.Sound(c.audio_path("parity_speech.wav"))
         self.parity_speech.set_volume(0.25)
         self.tetroid_speech = pygame.mixer.Sound(c.audio_path("tetroid_speech.wav"))
-        self.tetroid_speech.set_volume(0.15)
+        self.tetroid_speech.set_volume(0.10)
         self.warden_speech = pygame.mixer.Sound(c.audio_path("warden_speech.wav"))
         self.warden_speech.set_volume(0.15)
         self.continue_sound = pygame.mixer.Sound(c.audio_path("continue.wav"))
         self.continue_sound.set_volume(0.1)
 
+    def load_warden_music(self):
+        pygame.mixer.music.load(c.audio_path("warden.wav"))
+        pygame.mixer.music.play(-1)
+
+    def load_hedroid_music(self):
+        pygame.mixer.music.load(c.audio_path("hedroid.wav"))
+        pygame.mixer.music.play(-1)
+
+    def fade_out_music(self, time):
+        pygame.mixer.music.fadeout(time)
+
+    def set_music_volume(self, amt):
+        pygame.mixer.music.set_volume(amt)
+
     def main(self):
-        Intro(self)
-        Pause(self, 4)
+        # StarFish(self)
+        # Disclaimer(self)
+        # Title(self)
+        # Intro(self)
+        # Pause(self, 4)
         Level1(self)
         Pause(self, 2)
         Level2(self)
@@ -86,6 +108,7 @@ class Game:
 
     def update_main_game_objects(self, dt, events):
         self.player.update(dt, events)
+        self.background.update(dt, events)
         for enemy in self.enemies[::-1]:
             enemy.update(dt, events)
         for character in self.characters[::-1]:
@@ -97,6 +120,7 @@ class Game:
 
     def draw_main_game_objects(self, surface):
         self.screen.fill(c.BLACK)
+        self.background.draw(surface)
         self.player.draw(self.screen)
         for character in self.characters:
             character.draw(self.screen)
@@ -116,6 +140,8 @@ class Game:
                 pygame.quit()
                 sys.exit()
         dt = self.clock.tick(c.FPS)/1000
+        if dt > 0.05:
+            dt = 0.05
         self.fps.insert(0, 1/dt)
         self.fps = self.fps[:50]
         return dt, events

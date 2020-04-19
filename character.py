@@ -64,7 +64,7 @@ class Tetroid(Character):
         self.y = 125
         self.yoff = 0
         self.age = 0
-        self.alpha = -200
+        self.alpha = -130
         self.target_alpha = 255
         self.name = "Tetroid"
 
@@ -86,7 +86,7 @@ class Tetroid(Character):
         body_off = math.sin(self.age * 1.8) * 12
         hands_off = math.sin(self.age * 1.8 - math.pi / 4) * 16
         self.body.set_alpha(self.alpha)
-        self.hands.set_alpha(self.alpha + 200)
+        self.hands.set_alpha(self.alpha + 130)
         surface.blit(self.body, (x, y + body_off))
         surface.blit(self.hands, (x, y + hands_off))
 
