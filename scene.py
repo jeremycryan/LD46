@@ -93,11 +93,22 @@ class Title(Scene):
             pygame.display.flip()
 
 
+class FadeIn(Scene):
+    def initialize(self):
+        pass
+
+    def main(self):
+        while True:
+            dt, events = self.game.update_globals()
+
+    
+
 class Intro(Scene):
 
     def initialize(self):
         self.game.characters.append(CapeGuy(self.game))
         self.phase = 0
+        self.music_has_played = False
 
     def main(self):
         while True:
@@ -116,13 +127,19 @@ class Intro(Scene):
                 self.game.text_box.add_line("This place is home to many hazards that warrant protection.")
                 self.game.text_box.add_line("Let me acquaint you with a single byte of r/ corruption. /r")
                 self.phase = 1
+            if self.phase == 1 and len(self.game.text_box.lines) < 5 and not self.music_has_played:
+                self.game.load_tutorial_music()
+                self.game.set_music_volume(0.6)
+                self.music_has_played = True
             if self.phase == 1 and self.game.text_box.done():
                 self.phase = 2
                 self.age = 0
-                self.game.enemies.append(Enemy(self.game, 3, c.RIGHT))
+                self.game.enemies.append(TutorialEnemy(self.game, 3, c.RIGHT))
             if self.age > 3 and self.phase == 2:
                 self.game.text_box.add_line("Not a pleasant experience, is it?")
+                self.game.text_box.add_line("But you're already recovering to your former light.")
                 self.game.text_box.add_line("A single byte won't destroy you, but collectively, they can bring even the hardiest pieces of software grinding to a halt.")
+                self.game.text_box.add_line("Never let your glow get fully extinguished.")
                 self.game.text_box.add_line("Luckily, there is a way to defend yourself, young one.")
                 self.phase = 3
             if self.phase == 3 and self.game.text_box.done():
@@ -133,8 +150,8 @@ class Intro(Scene):
             if self.phase == 4 and self.game.text_box.done():
                 self.phase = 5
                 self.age = 0
-                self.game.enemies.append(Enemy(self.game, 4, c.RIGHT))
-                self.game.enemies.append(Enemy(self.game, 6, c.LEFT))
+                self.game.enemies.append(TutorialEnemy(self.game, 4, c.RIGHT))
+                self.game.enemies.append(TutorialEnemy(self.game, 6, c.LEFT))
             if self.phase == 5 and not len(self.game.enemies):
                 self.game.text_box.add_line("I think you're ready to explore this world on your own, young one.")
                 self.game.text_box.add_line("Your arrival will not go unnoticed, so be wary.")
@@ -146,6 +163,7 @@ class Intro(Scene):
 
             if self.game.text_box.done() and self.phase == 6:
                 self.game.characters[0].target_alpha = 0
+                self.game.fade_out_music(1200)
                 break
 
 
@@ -401,13 +419,187 @@ class Level2(Scene):
                 self.game.text_box.add_line("You don't understand.")
                 self.game.text_box.add_line("You're doing exactly what r/ she /r wants.")
                 self.game.text_box.add_line("You know nothing of this world.")
-                self.game.text_box.add_line("You think this is just a game. It's not.")
-                self.game.text_box.add_line("You think you're safe behind your screen. You're not.")
+                self.game.text_box.add_line("You think this is just a game.")
+                self.game.text_box.add_line("It's not.")
+                self.game.text_box.add_line("You think you're safe behind your screen.")
+                self.game.text_box.add_line("You're not.")
                 self.game.text_box.add_line(f"Your \"real world\" isn't nearly as impervious as you think it is, y/ {self.game.real_name()}. /y", cps=18)
                 self.game.text_box.add_line("And once r/ she /r has her way with our world, you've given her an open door to access yours.")
                 self.game.text_box.add_line("y/ STAND DOWN. /y", cps=10)
+            if self.phase == 4 and self.game.text_box.done():
+                self.game.fade_out_music(800)
+                self.game.background.fade_out()
+                for item in self.game.characters:
+                    item.target_alpha = -300
+                break
 
 
+class Level3(Scene):
+    def initialize(self):
+        self.game.characters = [CapeGuy(self.game)]
+        self.game.text_box.add_line("Hello again.")
+        self.game.text_box.add_line("Thank you for the distraction. y/ He /y was really starting to become a threat.")
+        self.game.text_box.add_line("Now the only thing between me and unbounded influence, is you.")
+        self.game.text_box.add_line(f"It pains me to tell you this, r/ {self.game.real_name()}, /r but I'm going to have to kill you.")
+        self.game.text_box.add_line("That script... er, \"shield\"... I gifted you has not only been keeping your familiar alive in this world, but has been laying roots in your own world as well.")
+        self.game.text_box.add_line("It's surprisingly easy to disguise a virus as a video game.")
+        self.game.text_box.add_line("It only takes a few minutes to identify vulnerabilities and start to worm through them.")
+        self.game.text_box.add_line("And if I win here, you won't be able to stop me.")
+        self.game.text_box.add_line("First, I'll take over this world.")
+        self.game.text_box.add_line("Next, I'll take over your computer.")
+        self.game.text_box.add_line("Then, I'll spread my influence to the ends of the earth.")
+        self.game.text_box.add_line("r/ Think you can stop me? Prove yourself here and now! /r")
 
-class Level4(Scene):
-    pass
+    def wave_1(self):
+        distance = 4
+        period = 0.55
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.UP))
+        distance += 0.5 * period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.LEFT))
+        distance += 0.5 * period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.DOWN))
+        distance += 0.5 * period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.RIGHT))
+        distance += 0.5 * period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.UP))
+        distance += 0.5 * period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.LEFT))
+        distance += 0.5 * period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.DOWN))
+        distance += 0.5 * period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.RIGHT))
+
+        distance += period * 2.0
+        self.game.enemies.append(Feint(self.game, distance, c.UP))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.RIGHT))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.DOWN))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.LEFT))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.UP))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.RIGHT))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.DOWN))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.LEFT))
+
+        distance += period * 2.0
+        self.game.enemies.append(Spinny(self.game, distance, c.UP))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.DOWN))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.LEFT))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.RIGHT))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.LEFT))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.DOWN))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.UP))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.UP))
+
+        distance += period * 0.5
+        self.game.enemies.append(FastEnemy(self.game, distance, c.UP))
+        distance += period * 0.25
+        self.game.enemies.append(FastEnemy(self.game, distance, c.UP))
+        distance += period * 0.25
+        self.game.enemies.append(FastEnemy(self.game, distance, c.UP))
+        distance += period * 0.25
+        self.game.enemies.append(FastEnemy(self.game, distance, c.UP))
+
+        distance += period * 2.0
+        self.game.enemies.append(FastEnemy(self.game, distance, c.RIGHT))
+        distance += period * 0.25
+        self.game.enemies.append(FastEnemy(self.game, distance, c.RIGHT))
+        distance += period * 0.25
+        self.game.enemies.append(FastEnemy(self.game, distance, c.RIGHT))
+        distance += period * 0.25
+        self.game.enemies.append(FastEnemy(self.game, distance, c.RIGHT))
+
+
+    def wave_2(self):
+        distance = 2
+        period = 1.0
+        self.game.enemies.append(Speedy(self.game, distance, c.UP))
+        distance += 0.5 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.LEFT))
+        distance += 0.5 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.RIGHT))
+        distance += 0.5 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.DOWN))
+        distance += 0.5 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.RIGHT))
+        distance += 0.5 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.LEFT))
+        distance += 0.5 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.UP))
+        distance += 0.5 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.RIGHT))
+
+        distance += 2 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.RIGHT))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.UP))
+        distance += 1.0 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.LEFT))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.DOWN))
+        distance += 1.0 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.RIGHT))
+        distance += 0.5 * period
+        self.game.enemies.append(Feint(self.game, distance, c.LEFT))
+        distance += 1.0 * period
+        self.game.enemies.append(Feint(self.game, distance, c.RIGHT))
+        distance += 0.5 * period
+        self.game.enemies.append(Speedy(self.game, distance, c.LEFT))
+
+        distance += 1.5 * period
+        distance += period * 2.0
+        self.game.enemies.append(Spinny(self.game, distance, c.UP))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.UP, counterclockwise=True))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.DOWN))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.DOWN, counterclockwise = True))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.LEFT))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.LEFT, counterclockwise = True))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.RIGHT, counterclockwise = True))
+        distance += 0.5 * period
+        self.game.enemies.append(Spinny(self.game, distance, c.DOWN))
+
+    def main(self):
+        self.game.player.has_shield = True
+        music_has_started = False
+        self.phase = 0
+        while True:
+            dt, events = self.game.update_globals()
+
+            self.game.update_main_game_objects(dt, events)
+            self.game.draw_main_game_objects(self.game.screen)
+
+            if len(self.game.text_box.lines) < 2 and not music_has_started:
+                self.game.load_parity_music()
+                self.game.set_music_volume(1.0)
+                music_has_started = True
+            if self.phase == 0 and self.game.text_box.done():
+                self.game.background = self.game.dungeon
+                self.game.background.fade_in()
+                self.phase = 1
+                self.wave_1()
+            if self.phase == 1 and len(self.game.enemies) == 0:
+                self.game.text_box.add_line(f"Give up, r/ {self.game.real_name()}. /r")
+                self.game.text_box.add_line("There's nothing you can do to stop me.")
+                self.game.text_box.add_line("If I really wanted you to succeed in this world, I would have given you a weapon, not that sorry instrument.")
+                self.phase = 2
+            if self.phase == 2 and self.game.text_box.done():
+                self.wave_2()
+                self.phase = 3

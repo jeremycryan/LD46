@@ -26,6 +26,11 @@ class Caves(Background):
         self.alpha = 0
         self.target_alpha = 0
 
+        self.temp_surf = None
+        self.since_full = 10
+        self.update_per = 3
+
+
     def load_layers(self):
         rel = "cave"
         self.layer_1 = pygame.image.load(c.image_path(f"{rel}_layer_1.png"))
@@ -43,6 +48,7 @@ class Caves(Background):
 
     def update(self, dt, events):
         super().update(dt, events)
+        self.since_full += 1
         self.x += self.speed * dt
         da = self.target_alpha - self.alpha
         if da:
@@ -80,3 +86,28 @@ class Ruins(Caves):
         self.layer_3 = pygame.image.load(c.image_path(f"{rel}_layer_3.png"))
 
         self.layers = [self.layer_3, self.layer_2, self.layer_1]
+
+
+class Dungeon(Caves):
+    def load_layers(self):
+        rel = "dungeon"
+        self.layer_1 = pygame.image.load(c.image_path(f"{rel}_layer_1.png"))
+        self.layer_2 = pygame.image.load(c.image_path(f"{rel}_layer_2.png"))
+        self.layer_3 = pygame.image.load(c.image_path(f"{rel}_layer_3.png"))
+
+        self.layers = [self.layer_3, self.layer_2, self.layer_1]
+
+    def draw(self, surface):
+        if self.alpha <= 0:
+            return
+        y = 0
+        if not self.temp_surf or self.since_full > 1:
+            self.temp_surf = pygame.Surface((self.layers[0].get_width(),
+                                   self.layers[0].get_height()*2))
+            self.since_full = 0
+            for i, layer in enumerate(self.layers):
+                x = int((self.x * self.layer_factors[i]) % c.WINDOW_WIDTH)
+                self.temp_surf.blit(layer, (x, y))
+                self.temp_surf.blit(layer, (x - layer.get_width(), y))
+        self.temp_surf.set_alpha(self.alpha)
+        surface.blit(self.temp_surf, (0, 80))

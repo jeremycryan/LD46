@@ -1,5 +1,6 @@
 import pygame
 import constants as c
+import math
 
 
 class Player:
@@ -11,21 +12,57 @@ class Player:
         self.shield_angle = 0
         self.shield_vis_angle = 0
         self.shield_surf = pygame.image.load(c.image_path("shield.png")).convert()
+        self.shield_bonk = pygame.image.load(c.image_path("shield_bonk.png")).convert()
         self.shield_surf.set_colorkey(c.BLACK)
+        self.shield_bonk.set_colorkey(c.BLACK)
         self.shield_surf.set_alpha(0)
+        self.shield_bonk.set_alpha(0)
         self.radius = 20
         self.shield_radius = 50
-        self.shield_spread = 90 # in degrees
+        self.shield_spread = 100 # in degrees
         self.has_shield = False
         self.move_disabled = False
 
+        self.surf = pygame.image.load(c.image_path("player.png")).convert()
+        self.surf.set_colorkey(c.BLACK)
+
+        self.bonk_time = 0.08
+        self.bonk_timer = self.bonk_time
+        self.recoil = 0
+        self.age = 0
+
+        self.health = 100
+
+    def take_damage(self):
+        self.health = int(max(self.health*0.8, 0))
+
     def draw(self, surface):
         x, y = self.game.xy_transform(self.x, self.y)
-        pygame.draw.circle(surface, c.WHITE, (x, y), self.radius)
+        self.surf.set_alpha((220 + 20 * math.sin(self.age * 2)) * (self.health+30)/130)
+
+        r = int((self.radius * 1.2 + 5 * math.sin(self.age * 2)) * (self.health + 50)/120)
+        glow = pygame.Surface((r*2, r*2))
+        pygame.draw.circle(glow, (200, 255, 215), (r, r), r)
+        glow.set_alpha(60 * (self.health/100))
+        glow.set_colorkey(c.BLACK)
+        surface.blit(glow, (x - glow.get_width()//2, y - glow.get_height()//2))
+
+        r = int((self.radius * 1.6 + 8 * math.sin(self.age * 2)) * (self.health + 50)/120)
+        glow = pygame.Surface((r*2, r*2))
+        pygame.draw.circle(glow, c.GREEN, (r, r), r)
+        glow.set_alpha(30 * (self.health/100))
+        glow.set_colorkey(c.BLACK)
+        surface.blit(glow, (x - glow.get_width()//2, y - glow.get_height()//2))
+
+        scale = int((self.health+30)/120 * self.surf.get_height())
+        surf = pygame.transform.scale(self.surf, (scale, scale))
+        surface.blit(surf, (x - surf.get_width()//2, y - surf.get_height()//2))
         self.draw_shield(surface)
         pass
 
     def update_shield(self, dt):
+        self.recoil *= 0.025**dt
+        self.bonk_timer += dt
         d = self.shield_angle - self.shield_vis_angle
         d2 = self.shield_angle - self.shield_vis_angle + 360
         d3 = self.shield_angle - self.shield_vis_angle - 360
@@ -36,6 +73,7 @@ class Player:
 
         if self.shield_surf.get_alpha() < 255 and self.has_shield:
             self.shield_surf.set_alpha(self.shield_surf.get_alpha() + dt * 600)
+            self.shield_bonk.set_alpha(self.shield_surf.get_alpha())
 
         diff = 20*true_d*dt
         if true_d > 0:
@@ -58,16 +96,27 @@ class Player:
         return False
 
     def draw_shield(self, surface):
+        shield_surf = self.shield_surf if self.bonk_timer > self.bonk_time else self.shield_bonk
         if not self.has_shield:
             return
-        ssurf = pygame.transform.rotate(self.shield_surf, self.shield_vis_angle)
+        ssurf = pygame.transform.rotate(shield_surf, self.shield_vis_angle)
         x = self.x - ssurf.get_width()//2
         y = self.y - ssurf.get_height()//2
         x, y = self.game.xy_transform(x, y)
-        surface.blit(ssurf, (x, y))
+
+        rad = self.shield_vis_angle * math.pi / 180
+        xoff = int(self.recoil * -math.cos(rad))
+        yoff = int(self.recoil * math.sin(rad))
+
+        surface.blit(ssurf, (x + xoff, y + yoff))
 
     def update(self, dt, events):
 
+        if self.health < 100:
+            self.health += 10 * dt
+
+        self.age += dt
+        old = self.shield_angle
         for event in events:
             if event.type == pygame.KEYDOWN and self.has_shield and not self.move_disabled:
                 if event.key == pygame.K_UP:
@@ -78,6 +127,8 @@ class Player:
                     self.shield_angle = c.LEFT
                 elif event.key == pygame.K_DOWN:
                     self.shield_angle = c.DOWN
+        if self.shield_angle != old:
+            self.game.change_direction_sound.play()
 
         self.update_shield(dt)
         self.shield_vis_angle %= 360

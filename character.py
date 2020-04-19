@@ -46,6 +46,8 @@ class CapeGuy(Character):
             self.alpha = max(self.alpha + da * dt, self.target_alpha)
 
     def draw(self, surface):
+        if self.alpha <= 0:
+            return
         size = self.sprite.size()
         x, y = self.game.xy_transform(self.x, self.y)
         self.sprite.set_position((x - size[0]//2, y + self.yoff - size[1]//2))
@@ -80,6 +82,8 @@ class Tetroid(Character):
             self.alpha = max(self.alpha + da * dt, self.target_alpha)
 
     def draw(self, surface):
+        if self.alpha <= -200:
+            return
         x, y = self.game.xy_transform(self.x, self.y)
         x -= self.body.get_width()//2
         y -= self.body.get_height()//2
@@ -113,6 +117,8 @@ class Warden(Character):
         self.name = "Warden"
 
     def draw(self, surface):
+        if self.alpha <= -200:
+            return
         size = self.sprite.size()
         x, y = self.game.xy_transform(self.x, self.y)
         self.sprite.set_position((x - size[0]//2, y - size[1]//2))

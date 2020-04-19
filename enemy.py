@@ -24,18 +24,19 @@ class Enemy:
         self.age = 0
         self.shine = 1.0
 
+
     def update(self, dt, events):
         self.since_drop += dt
         self.age += dt
+        x, y = self.get_xy()
         while self.since_drop > self.drop_period:
             self.since_drop -= self.drop_period
-            x, y = self.get_xy()
             if x < -200 or y < -200 or x > c.WINDOW_WIDTH + 200 or y > c.WINDOW_HEIGHT + 200:
                 continue
-            for i in range(8):
+            for i in range(4):
                 Spark(self.game, (x, y), c.WHITE)
             offsets = [-15, 0, 15] if self.direction%360 in (c.LEFT, c.RIGHT) else [-8, 0, 8]
-            num = random.choice([1, 2, 3])
+            num = random.choice([0, 1, 1, 2, 2, 3])
             while num > 0:
                 if self.direction%360 in (c.LEFT, c.RIGHT):
                     n = random.choice(offsets)
@@ -52,6 +53,8 @@ class Enemy:
             if self.game.player.is_blocking(self):
                 self.destroy()
                 self.game.shield_hit.play()
+                self.game.player.bonk_timer = 0
+                self.game.player.recoil = 13
             else:
                 self.before_shield = False
         self.distance -= dt * self.speed
@@ -92,6 +95,7 @@ class Enemy:
         self.game.set_flash(0.5)
         self.destroy()
         self.game.hit.play()
+        self.game.player.take_damage()
 
     def jitter(self, x, y):
         speed = 1.2
@@ -105,9 +109,15 @@ class Enemy:
             return
         self.game.shake(4)
         self.game.enemies.remove(self)
-        for i in range(20):
+        for i in range(12):
             Spark(self.game, self.get_xy(), self.color, width=6, speed=500, fade=1200)
             Spark(self.game, self.get_xy(), c.WHITE, width=4, speed=500, fade=1200)
+
+
+class TutorialEnemy(Enemy):
+    def damage_player(self):
+        for i in range(3):
+            super().damage_player()
 
 
 class RedEnemy(Enemy):
@@ -116,6 +126,7 @@ class RedEnemy(Enemy):
         self.speed *= 0.7
         self.distance *= 0.7
         self.drop_period /= 0.7
+
 
 
 class BlueEnemy(Enemy):

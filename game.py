@@ -38,15 +38,16 @@ class Game:
 
         self.caves = Caves(self)
         self.ruins = Ruins(self)
+        self.dungeon = Dungeon(self)
         self.background = self.caves
 
         self.load_audio()
 
     def load_audio(self):
         self.shield_hit = pygame.mixer.Sound(c.audio_path("shield_hit.wav"))
-        self.shield_hit.set_volume(0.2)
+        self.shield_hit.set_volume(0.08)
         self.hit = pygame.mixer.Sound(c.audio_path("hit.wav"))
-        self.hit.set_volume(0.5)
+        self.hit.set_volume(0.35)
         self.parity_speech = pygame.mixer.Sound(c.audio_path("parity_speech.wav"))
         self.parity_speech.set_volume(0.25)
         self.tetroid_speech = pygame.mixer.Sound(c.audio_path("tetroid_speech.wav"))
@@ -55,9 +56,19 @@ class Game:
         self.warden_speech.set_volume(0.15)
         self.continue_sound = pygame.mixer.Sound(c.audio_path("continue.wav"))
         self.continue_sound.set_volume(0.1)
+        self.change_direction_sound = pygame.mixer.Sound(c.audio_path("change_direction.wav"))
+        self.change_direction_sound.set_volume(0.12)
 
     def load_warden_music(self):
         pygame.mixer.music.load(c.audio_path("warden.wav"))
+        pygame.mixer.music.play(-1)
+
+    def load_parity_music(self):
+        pygame.mixer.music.load(c.audio_path("parity.wav"))
+        pygame.mixer.music.play(-1)
+
+    def load_tutorial_music(self):
+        pygame.mixer.music.load(c.audio_path("parity_echo.wav"))
         pygame.mixer.music.play(-1)
 
     def load_hedroid_music(self):
@@ -74,11 +85,14 @@ class Game:
         # StarFish(self)
         # Disclaimer(self)
         # Title(self)
-        # Intro(self)
-        # Pause(self, 4)
+        FadeIn(self)
+        Intro(self)
+        Pause(self, 4)
         Level1(self)
         Pause(self, 2)
         Level2(self)
+        Pause(self, 2)
+        Level3(self)
 
     def real_name(self):
         return getpass.getuser()

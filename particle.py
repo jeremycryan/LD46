@@ -38,7 +38,7 @@ class Bit(Particle):
         self.surf = self.body_font.render(char, 0, color).convert()
 
     def update(self, dt, events):
-        self.alpha -= 300 * dt
+        self.alpha -= 400 * dt
         if self.alpha <= 0:
             self.destroy()
 
