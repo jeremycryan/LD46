@@ -32,11 +32,14 @@ class Intro(Scene):
             if self.age > 2 and self.phase == 0:
                 self.game.text_box.add_line("What have we here?")
                 self.game.text_box.add_line("Few programs venture this deep, but you're of a different sort, aren't you?")
-                self.game.text_box.add_line("From *the* *land* *beyond,* perhaps?")
-                self.game.text_box.add_line("No matter. As a lost soul, you must be in need of guidance.")
-                self.game.text_box.add_line("You can call me *Parity.*")
+                self.game.text_box.add_line("From r/ the land beyond, /r perhaps?")
+                self.game.text_box.add_line("...")
+                self.game.text_box.add_line("No matter.")
+                self.game.text_box.add_line("As a lost traveler, you must be in need of guidance.")
+                self.game.text_box.add_line("You can call me r/ Parity. /r")
                 self.game.text_box.add_line("I serve as a peacekeeper of sorts, purging this world of... irregularities.")
-                self.game.text_box.add_line("Let me acquaint you with a single byte of *corruption.*")
+                self.game.text_box.add_line("There are many hazards about that warrant protection.")
+                self.game.text_box.add_line("Let me acquaint you with a single byte of r/ corruption. /r")
                 self.phase = 1
             if self.phase == 1 and self.game.text_box.done():
                 self.phase = 2
@@ -50,16 +53,17 @@ class Intro(Scene):
             if self.phase == 3 and self.game.text_box.done():
                 self.game.player.has_shield = True
                 self.game.text_box.add_line("This shield will safeguard you from most threats.")
-                self.game.text_box.add_line("You can change its direction with *the* *arrow* *keys.*")
+                self.game.text_box.add_line("You can change its direction with r/ the arrow keys. /r")
                 self.phase = 4
             if self.phase == 4 and self.game.text_box.done():
                 self.phase = 5
                 self.age = 0
-                self.game.enemies.append(Enemy(self.game, 3, c.RIGHT))
-                self.game.enemies.append(Enemy(self.game, 4.5, c.LEFT))
-            if self.phase == 5 and self.age > 4.5:
+                self.game.enemies.append(Enemy(self.game, 4, c.RIGHT))
+                self.game.enemies.append(Enemy(self.game, 6, c.LEFT))
+            if self.phase == 5 and not len(self.game.enemies):
                 self.game.text_box.add_line("I think you're ready to explore this world on your own, young one.")
-                self.game.text_box.add_line("I will observe your actions with great interest.")
+                self.game.text_box.add_line("Your arrival will not go unnoticed, so be wary.")
+                self.game.text_box.add_line("I will observe your actions with interest.")
                 self.phase = 6
 
             self.game.update_main_game_objects(dt, events)
@@ -70,6 +74,21 @@ class Intro(Scene):
                 break
 
 
+class Pause(Scene):
+    def __init__(self, game, duration):
+        self.duration = duration
+        super().__init__(game)
+
+    def main(self):
+        while True:
+            dt, events = self.game.update_globals()
+            self.age += dt
+            self.game.update_main_game_objects(dt, events)
+            self.game.draw_main_game_objects(self.game.screen)
+            if self.age > self.duration:
+                break
+
+
 class Level1(Scene):
 
     def initialize(self):
@@ -77,13 +96,76 @@ class Level1(Scene):
         self.game.player.has_shield = True
         self.phase = 0
 
-        self.game.text_box.add_line("ahhhhhhhhhh murder")
+        self.game.text_box.add_line("Why hello, little morsel.")
+        self.game.text_box.add_line("Now that r/ she's /r gone, I have you all to myself.")
+        self.game.text_box.add_line("Once I've corrupted your core, I can absorb your processing power and bolster my own strength.")
+        self.game.text_box.add_line("Do try to flee... it only adds to the fun.")
 
     def wave_1(self):
-        for i in range(5):
+        period = 1.0
+        for i in range(4):
             direction = c.DIRECTIONS[i % 4]
-            distance = i + 3
-            self.game.enemies.append(Enemy(self.game, distance, direction))
+            distance = i * period + 3 * period
+            self.game.enemies.append(BlueEnemy(self.game, distance, direction))
+
+    def wave_1p5(self):
+
+        period = 0.75
+        distance = 1.5
+        directions = [c.UP, c.DOWN, c.RIGHT, c.LEFT]
+        for i in range(4):
+            direction = directions[i]
+            self.game.enemies.append(Feint(self.game, distance, direction))
+            distance += period * 2
+
+        for i in range(4):
+            direction = c.DIRECTIONS[i]
+            other_direction = c.DIRECTIONS[(i+2) % 4]
+            self.game.enemies.append(BlueEnemy(self.game, distance, direction))
+            distance += period * 0.5
+            self.game.enemies.append(Feint(self.game, distance, other_direction))
+            distance += period * 1.5
+
+    def wave_2(self):
+        period = 0.7
+        distance = 0
+        for i in range(8):
+            direction = [c.UP, c.DOWN, c.LEFT, c.RIGHT][i % 4]
+            distance = i * period + 4 * period
+            self.game.enemies.append(BlueEnemy(self.game, distance, direction))
+        self.game.enemies.append(FastEnemy(self.game, distance + 0.5*period, c.LEFT))
+
+
+    def wave_3(self):
+        period = 0.7
+        distance = 2
+        directions = [c.UP, c.RIGHT, c.DOWN, c.LEFT, c.UP, c.LEFT, c.DOWN, c.RIGHT]
+        for i in range(8):
+            direction = directions[i]
+            distance += period
+            ccw = (i % 2 == 0)
+            self.game.enemies.append(Spinny(self.game, distance, direction, counterclockwise=ccw))
+        distance += period * 2
+        for i in range(8):
+            direction = directions[i]
+            distance += period
+            ccw = (i % 2 == 0)
+            self.game.enemies.append(Spinny(self.game, distance, direction, counterclockwise=ccw))
+
+        distance += period * 2
+
+        self.game.enemies.append(FastEnemy(self.game, distance + 0.5*period, c.DOWN))
+        self.game.enemies.append(FastEnemy(self.game, distance + 0.75 * period, c.DOWN))
+        self.game.enemies.append(FastEnemy(self.game, distance + 1 * period, c.DOWN))
+
+
+    def wave_4(self):
+        period = 0.6
+        distance = 2
+        directions = [c.UP, c.DOWN, c.LEFT, c.RIGHT, c.LEFT, c.RIGHT]
+        for direction in directions:
+            distance += period
+            self.game.enemies.append(Speedy(self.game, distance, direction))
 
     def main(self):
         while True:
@@ -95,39 +177,145 @@ class Level1(Scene):
             if self.phase == 0 and self.game.text_box.done():
                 self.wave_1()
                 self.phase = 1
-
-
-            if len(self.game.enemies) == 0 and self.phase == 3:
+            if self.phase == 1 and not len(self.game.enemies):
+                self.game.text_box.add_line("Ah, you come prepared!")
+                self.game.text_box.add_line("See if you can handle my more b/ elusive attacks... /b")
+                self.phase = 2
+            if self.phase == 2 and self.game.text_box.done():
+                self.phase = 3
+                self.wave_1p5()
+            if self.phase == 3 and not len(self.game.enemies):
+                self.game.text_box.add_line("That's enough cat and mouse.")
+                self.game.text_box.add_line("Let's see you fight for your life!")
+                self.phase = 4
+            if self.phase == 4 and self.game.text_box.done():
+                self.phase = 5
+                self.wave_2()
+            if len(self.game.enemies) == 0 and self.phase == 5:
+                self.game.text_box.add_line("i am defeat")
+                for item in self.game.characters:
+                    item.target_alpha = -300
+                self.phase = 6
+            if self.game.text_box.done() and self.phase == 6:
                 break
 
-class Interlude1(Scene):
 
+class Level2(Scene):
     def initialize(self):
-        self.game.text_box.add_line("There's more!")
+        self.game.characters = [Warden(self.game)]
+        self.game.text_box.add_line("At last, we meet.")
+        self.game.text_box.add_line("Allow me to introduce myself.")
+        self.game.text_box.add_line("You can call me y/ Warden. /y")
+        self.game.text_box.add_line("It is my duty to confront the evil that wanders into this realm, capture it, and lock it away for good.")
+        self.game.text_box.add_line("Some time ago, a r/ being of immense power /r escaped my watch.")
+        self.game.text_box.add_line("And now, you have fallen under her influence.")
+        self.game.text_box.add_line("As such, I am forced to take up arms against you.")
+        self.game.text_box.add_line("Prepare yourself. This is for your own good.")
+
+    def wave1(self):
+        period = 0.5
+        distance = 1
+        self.game.enemies.append(FastEnemy(self.game, distance, c.LEFT))
+        distance += 0.25*period
+        self.game.enemies.append(FastEnemy(self.game, distance, c.LEFT))
+        distance += 0.25 * period
+        self.game.enemies.append(FastEnemy(self.game, distance, c.LEFT))
+        distance += 1.0 * period
+        self.game.enemies.append(FastEnemy(self.game, distance, c.RIGHT))
+        distance += 0.25*period
+        self.game.enemies.append(FastEnemy(self.game, distance, c.RIGHT))
+        distance += 0.25 * period
+        self.game.enemies.append(FastEnemy(self.game, distance, c.RIGHT))
+        distance += 5 * period
+
+        directions = [c.UP, c.RIGHT, c.LEFT, c.DOWN, c.UP, c.LEFT, c.DOWN, c.UP]
+        for i in range(8):
+            direction = directions[i]
+            distance += period
+            ccw = (i % 2 == 0)
+            self.game.enemies.append(Spinny(self.game, distance, direction, counterclockwise=ccw))
+        distance += period * 2
+        for i in range(8):
+            direction = directions[i]
+            distance += period
+            ccw = (i % 2 == 0)
+            self.game.enemies.append(Spinny(self.game, distance, direction, counterclockwise=ccw))
+
+        distance += 0.5 * period
+        self.game.enemies.append(FastEnemy(self.game, distance, c.DOWN))
+        distance += 0.25*period
+        self.game.enemies.append(FastEnemy(self.game, distance, c.DOWN))
+        distance += 0.25 * period
+        self.game.enemies.append(FastEnemy(self.game, distance, c.DOWN))
+        distance += 1.5 * period
+
+        self.game.enemies.append(Speedy(self.game, distance, c.LEFT))
+        distance += period
+        self.game.enemies.append(Speedy(self.game, distance, c.RIGHT))
+        distance += period
+        self.game.enemies.append(Speedy(self.game, distance, c.UP))
+        distance += period
+        self.game.enemies.append(Speedy(self.game, distance, c.DOWN))
+        distance += period
+        self.game.enemies.append(Speedy(self.game, distance, c.LEFT))
+        distance += period*1.5
+        self.game.enemies.append(RedEnemy(self.game, distance, c.RIGHT))
+
+
+    def wave2(self):
+        period = 0.4
+        distance = 2
+        self.game.enemies.append(FastEnemy(self.game, distance, c.RIGHT))
+        distance += period*2
+        self.game.enemies.append(FastEnemy(self.game, distance, c.LEFT))
+        distance += period*8
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.RIGHT))
+        distance += period
+        self.game.enemies.append(Spinny(self.game, distance, c.LEFT))
+        distance += period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.UP))
+        distance += period
+        self.game.enemies.append(Spinny(self.game, distance, c.RIGHT))
+        distance += period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.LEFT))
+        distance += period
+        self.game.enemies.append(Spinny(self.game, distance, c.DOWN))
+        distance += period
+        self.game.enemies.append(BlueEnemy(self.game, distance, c.DOWN))
+        distance += period
+        self.game.enemies.append(Spinny(self.game, distance, c.UP))
 
     def main(self):
+        self.phase = 0
+        self.game.player.has_shield = True
         while True:
             dt, events = self.game.update_globals()
 
             self.game.update_main_game_objects(dt, events)
             self.game.draw_main_game_objects(self.game.screen)
 
-            if self.game.text_box.done():
-                break
+            if self.game.text_box.done() and self.phase == 0:
+                self.phase = 1
+                self.wave1()
+            if self.phase == 1 and len(self.game.enemies) == 0:
+                self.phase = 2
+                self.game.text_box.add_line("Your defeat is inevitable.")
+                self.game.text_box.add_line("y/ Accept it. /y")
+            if self.phase == 2 and self.game.text_box.done():
+                self.wave2()
+                self.phase = 3
+            if self.phase == 3 and len(self.game.enemies) == 0:
+                self.phase = 4
+                self.game.text_box.add_line("You don't understand.")
+                self.game.text_box.add_line("You're doing exactly what r/ she /r wants.")
+                self.game.text_box.add_line("You know nothing of this world.")
+                self.game.text_box.add_line("You think this is just a game. It's not.")
+                self.game.text_box.add_line("You think you're safe behind your screen. You're not.")
+                self.game.text_box.add_line(f"Your \"real world\" isn't nearly as impervious as you think it is, y/ {self.game.real_name()}. /y", cps=18)
+                self.game.text_box.add_line("And once r/ she /r has her way with our world, you've given her an open door to access yours.")
+                self.game.text_box.add_line("y/ STAND DOWN. /y", cps=10)
 
-class Level2(Level1):
-    def initialize(self):
-        for i in range(5):
-            direction = c.DIRECTIONS[i % 4]
-            distance = i + 3
-            self.game.enemies.append(FastEnemy(self.game, distance, direction))
 
-    def main(self):
-        while True:
-            dt, events = self.game.update_globals()
 
-            self.game.update_main_game_objects(dt, events)
-            self.game.draw_main_game_objects(self.game.screen)
-
-            if len(self.game.enemies) == 0:
-                break
+class Level4(Scene):
+    pass

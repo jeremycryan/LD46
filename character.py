@@ -25,6 +25,7 @@ class CapeGuy(Character):
         idle = SpriteSheet(c.image_path("evil_guy_placeholder.png"), (1, 1), 1)
         self.sprite.add_animation({"Idle": idle})
         self.sprite.start_animation("Idle")
+        self.name = "Parity"
 
         self.x = c.WINDOW_WIDTH//2
         self.y = 125
@@ -63,8 +64,9 @@ class Tetroid(Character):
         self.y = 125
         self.yoff = 0
         self.age = 0
-        self.alpha = 0
+        self.alpha = -200
         self.target_alpha = 255
+        self.name = "Tetroid"
 
     def update(self, dt, events):
         super().update(dt, events)
@@ -84,6 +86,48 @@ class Tetroid(Character):
         body_off = math.sin(self.age * 1.8) * 12
         hands_off = math.sin(self.age * 1.8 - math.pi / 4) * 16
         self.body.set_alpha(self.alpha)
-        self.hands.set_alpha(self.alpha)
+        self.hands.set_alpha(self.alpha + 200)
         surface.blit(self.body, (x, y + body_off))
         surface.blit(self.hands, (x, y + hands_off))
+
+
+class Warden(Character):
+
+    def __init__(self, game):
+        super().__init__(game)
+        self.sprite = Sprite(3, colorkey=c.BLACK)
+        self.halberd = Sprite(3, colorkey=c.BLACK)
+        idle = SpriteSheet(c.image_path("warden.png"), (1, 1), 1)
+        self.sprite.add_animation({"Idle": idle})
+        self.sprite.start_animation("Idle")
+
+        idle = SpriteSheet(c.image_path("halberd.png"), (1, 1), 1)
+        self.halberd.add_animation({"Idle": idle})
+        self.halberd.start_animation("Idle")
+
+        self.x = c.WINDOW_WIDTH // 2
+        self.y = 125
+        self.age = 0
+        self.alpha = -200
+        self.target_alpha = 255
+        self.name = "Warden"
+
+    def draw(self, surface):
+        size = self.sprite.size()
+        x, y = self.game.xy_transform(self.x, self.y)
+        self.sprite.set_position((x - size[0]//2, y - size[1]//2))
+        yoff = math.sin(self.age * 1.6) * 5
+        self.halberd.set_position((x - size[0]//2, y - size[1]//2 + yoff))
+        self.sprite.draw(surface, self.alpha)
+        self.halberd.draw(surface, self.alpha + 200)
+
+    def update(self, dt, events):
+        self.sprite.update(dt)
+        self.age += dt
+
+        da = self.target_alpha - self.alpha
+        if da >= 0:
+            self.alpha = min(self.alpha + da * dt, self.target_alpha)
+        else:
+            self.alpha = max(self.alpha + da * dt, self.target_alpha)
+

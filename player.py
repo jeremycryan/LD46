@@ -10,11 +10,14 @@ class Player:
         self.y = c.WINDOW_HEIGHT//2
         self.shield_angle = 0
         self.shield_vis_angle = 0
-        self.shield_surf = pygame.image.load(c.image_path("shield.png"))
+        self.shield_surf = pygame.image.load(c.image_path("shield.png")).convert()
+        self.shield_surf.set_colorkey(c.BLACK)
+        self.shield_surf.set_alpha(0)
         self.radius = 20
         self.shield_radius = 50
         self.shield_spread = 90 # in degrees
         self.has_shield = False
+        self.move_disabled = False
 
     def draw(self, surface):
         x, y = self.game.xy_transform(self.x, self.y)
@@ -31,7 +34,10 @@ class Player:
             if abs(item) < abs(true_d):
                 true_d = item
 
-        diff = 15*true_d*dt
+        if self.shield_surf.get_alpha() < 255 and self.has_shield:
+            self.shield_surf.set_alpha(self.shield_surf.get_alpha() + dt * 600)
+
+        diff = 20*true_d*dt
         if true_d > 0:
             diff = min(diff, true_d)
         else:
@@ -63,7 +69,7 @@ class Player:
     def update(self, dt, events):
 
         for event in events:
-            if event.type == pygame.KEYDOWN and self.has_shield:
+            if event.type == pygame.KEYDOWN and self.has_shield and not self.move_disabled:
                 if event.key == pygame.K_UP:
                     self.shield_angle = c.UP
                 elif event.key == pygame.K_RIGHT:
