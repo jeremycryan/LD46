@@ -1,6 +1,7 @@
 import pygame
 import constants as c
 import math
+from particle import Spark
 
 
 class Player:
@@ -30,13 +31,20 @@ class Player:
         self.bonk_timer = self.bonk_time
         self.recoil = 0
         self.age = 0
+        self.mortal = False
 
         self.health = 100
+        self.dead = False
 
     def take_damage(self):
-        self.health = int(max(self.health*0.8, 0))
+        if not self.mortal:
+            self.health = int(max(self.health*0.8, 1))
+        else:
+            self.health = int(max(self.health - 15, 0))
 
     def draw(self, surface):
+        if self.dead:
+            return
         x, y = self.game.xy_transform(self.x, self.y)
         self.surf.set_alpha((220 + 20 * math.sin(self.age * 2)) * (self.health+30)/130)
 
@@ -60,6 +68,11 @@ class Player:
         self.draw_shield(surface)
         pass
 
+    def die(self):
+        self.dead = True
+        for i in range(40):
+            Spark(self.game, (self.x, self.y), c.WHITE, speed=800)
+
     def update_shield(self, dt):
         self.recoil *= 0.025**dt
         self.bonk_timer += dt
@@ -72,8 +85,10 @@ class Player:
                 true_d = item
 
         if self.shield_surf.get_alpha() < 255 and self.has_shield:
-            self.shield_surf.set_alpha(self.shield_surf.get_alpha() + dt * 600)
+            self.shield_surf.set_alpha(min(255, self.shield_surf.get_alpha() + dt * 600))
             self.shield_bonk.set_alpha(self.shield_surf.get_alpha())
+        if self.shield_surf.get_alpha() > 0 and not self.has_shield:
+            self.shield_surf.set_alpha(max(0, self.shield_surf.get_alpha() - dt * 600))
 
         diff = 20*true_d*dt
         if true_d > 0:
@@ -97,7 +112,7 @@ class Player:
 
     def draw_shield(self, surface):
         shield_surf = self.shield_surf if self.bonk_timer > self.bonk_time else self.shield_bonk
-        if not self.has_shield:
+        if self.shield_surf.get_alpha() < 0:
             return
         ssurf = pygame.transform.rotate(shield_surf, self.shield_vis_angle)
         x = self.x - ssurf.get_width()//2
@@ -112,13 +127,16 @@ class Player:
 
     def update(self, dt, events):
 
+        if self.mortal and self.health == 0:
+            self.die()
+
         if self.health < 100:
-            self.health += 10 * dt
+            self.health += 7 * dt
 
         self.age += dt
         old = self.shield_angle
         for event in events:
-            if event.type == pygame.KEYDOWN and self.has_shield and not self.move_disabled:
+            if event.type == pygame.KEYDOWN and self.has_shield and not self.dead and not self.move_disabled:
                 if event.key == pygame.K_UP:
                     self.shield_angle = c.UP
                 elif event.key == pygame.K_RIGHT:

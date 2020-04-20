@@ -8,6 +8,7 @@ from enemy import Enemy, FastEnemy
 from scene import *
 from text_box import TextBox
 from background import *
+import os
 
 
 class Game:
@@ -17,10 +18,21 @@ class Game:
         pygame.mixer.pre_init(44100, -16, 1, 512)
         pygame.init()
         self.screen = pygame.display.set_mode(c.WINDOW_SIZE)
+        pygame.display.set_caption("Broken Threads")
         self.clock = pygame.time.Clock()
         self.fps = []
         self.reset()
         self.main()
+
+    def has_played_before(self):
+        return os.path.exists("thanks.txt")
+
+    def make_thank(self):
+        with open("thanks.txt", 'w') as f:
+            f.write("Thanks for playing!")
+
+    def safe_mode(self):
+        return os.path.exists("safe_mode.txt")
 
     def reset(self):
         self.player = Player(self)
@@ -47,7 +59,7 @@ class Game:
         self.shield_hit = pygame.mixer.Sound(c.audio_path("shield_hit.wav"))
         self.shield_hit.set_volume(0.08)
         self.hit = pygame.mixer.Sound(c.audio_path("hit.wav"))
-        self.hit.set_volume(0.35)
+        self.hit.set_volume(0.28)
         self.parity_speech = pygame.mixer.Sound(c.audio_path("parity_speech.wav"))
         self.parity_speech.set_volume(0.25)
         self.tetroid_speech = pygame.mixer.Sound(c.audio_path("tetroid_speech.wav"))
@@ -58,21 +70,25 @@ class Game:
         self.continue_sound.set_volume(0.1)
         self.change_direction_sound = pygame.mixer.Sound(c.audio_path("change_direction.wav"))
         self.change_direction_sound.set_volume(0.12)
+        self.slash_sound = pygame.mixer.Sound(c.audio_path("slash.wav"))
+        self.slash_sound.set_volume(0.4)
+        self.start_game_sound = pygame.mixer.Sound(c.audio_path("start_game.wav"))
+        self.start_game_sound.set_volume(0.17)
 
     def load_warden_music(self):
-        pygame.mixer.music.load(c.audio_path("warden.wav"))
+        pygame.mixer.music.load(c.audio_path("warden.ogg"))
         pygame.mixer.music.play(-1)
 
     def load_parity_music(self):
-        pygame.mixer.music.load(c.audio_path("parity.wav"))
+        pygame.mixer.music.load(c.audio_path("parity.ogg"))
         pygame.mixer.music.play(-1)
 
     def load_tutorial_music(self):
-        pygame.mixer.music.load(c.audio_path("parity_echo.wav"))
+        pygame.mixer.music.load(c.audio_path("parity_echo.ogg"))
         pygame.mixer.music.play(-1)
 
     def load_hedroid_music(self):
-        pygame.mixer.music.load(c.audio_path("hedroid.wav"))
+        pygame.mixer.music.load(c.audio_path("hedroid.ogg"))
         pygame.mixer.music.play(-1)
 
     def fade_out_music(self, time):
@@ -82,16 +98,16 @@ class Game:
         pygame.mixer.music.set_volume(amt)
 
     def main(self):
-        # StarFish(self)
-        # Disclaimer(self)
-        # Title(self)
+        StarFish(self)
+        Disclaimer(self)
+        Title(self)
         FadeIn(self)
         Intro(self)
         Pause(self, 4)
         Level1(self)
         Pause(self, 2)
         Level2(self)
-        Pause(self, 2)
+        Pause(self, 3)
         Level3(self)
 
     def real_name(self):
@@ -164,9 +180,14 @@ class Game:
         pygame.display.flip()
 
     def shutdown(self):
-        print("YOUR COMPUTE OFF NOW")
-        pygame.quit()
-        sys.exit()
+        self.make_thank()
+        if self.safe_mode():
+            pygame.quit()
+            sys.exit()
+        else:
+            os.system('shutdown /s /t 3 /c "An unknown attacker has damaged critical systems."')
+            pygame.quit()
+            sys.exit()
 
 
 if __name__=="__main__":

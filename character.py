@@ -115,21 +115,51 @@ class Warden(Character):
         self.alpha = -200
         self.target_alpha = 255
         self.name = "Warden"
+        self.slashing = False
+        self.slash_timer = 0
+
+        self.left = pygame.image.load(c.image_path("warden_left.png")).convert()
+        self.left.set_colorkey(c.BLACK)
+        self.left.set_alpha(255)
+        self.right = pygame.image.load(c.image_path("warden_right.png")).convert()
+        self.right.set_colorkey(c.BLACK)
+        self.right.set_alpha(255)
 
     def draw(self, surface):
         if self.alpha <= -200:
             return
+
         size = self.sprite.size()
         x, y = self.game.xy_transform(self.x, self.y)
         self.sprite.set_position((x - size[0]//2, y - size[1]//2))
         yoff = math.sin(self.age * 1.6) * 5
         self.halberd.set_position((x - size[0]//2, y - size[1]//2 + yoff))
-        self.sprite.draw(surface, self.alpha)
-        self.halberd.draw(surface, self.alpha + 200)
+        if not self.slashing:
+            self.sprite.draw(surface, self.alpha)
+            self.halberd.draw(surface, self.alpha + 200)
+        else:
+            width = 4
+            yoff = max(0, ((self.slash_timer - 2.0) * 40)) ** 2
+            alpha = min(255, 255 - (self.slash_timer - 2.0) * 800)
+
+            lx = x - width//2 - size[0]//2
+            rx = lx + self.left.get_width() + width
+            ly = y - size[1]//2 + yoff
+            ry = y - size[1]//2 - yoff
+            self.left.set_alpha(alpha)
+            self.right.set_alpha(alpha)
+            if alpha > 0:
+                surface.blit(self.left, (lx, ly))
+                surface.blit(self.right, (rx, ry))
+            else:
+                self.game.characters.remove(self)
 
     def update(self, dt, events):
         self.sprite.update(dt)
-        self.age += dt
+        if not self.slashing:
+            self.age += dt
+        else:
+            self.slash_timer += dt
 
         da = self.target_alpha - self.alpha
         if da >= 0:
@@ -137,3 +167,8 @@ class Warden(Character):
         else:
             self.alpha = max(self.alpha + da * dt, self.target_alpha)
 
+    def slash(self):
+        self.game.slash_sound.play()
+        self.game.shake(15)
+        self.slashing = True
+        self.game.set_flash(0.5)

@@ -49,7 +49,7 @@ class TextBox:
     def draw(self, surface):
         fps = int(sum(self.game.fps)/len(self.game.fps))
         fps = self.body_font.render(f"FPS: {fps}", 1, c.WHITE)
-        surface.blit(fps, (5, 5))
+        #surface.blit(fps, (5, 5))
 
         if self.done():
             return
@@ -200,11 +200,10 @@ class Line:
                 if drawn > self.visible_chars:
                     break
                 xoff += csurf.get_width()
-            xoff += self.box.chars[" "].get_width()
+            xoff += self.box.chars[" "].get_width() * 1.5
             drawn += 1
             if drawn > self.visible_chars:
                 break
-
 
         if self.is_blink():
             surface.blit(self.box.advance_arrow, (x + xoff, y + yoff))

@@ -103,6 +103,7 @@ class SpeedyFlash(Particle):
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
         pygame.draw.circle(self.surf, c.PURPLE, (self.radius, self.radius), self.radius)
         self.surf.set_colorkey(c.BLACK)
+        self.surf.set_alpha(255)
 
 
     def update(self, dt, events):
@@ -118,7 +119,12 @@ class SpeedyFlash(Particle):
     def draw(self, surface):
         prev_alpha = self.surf.get_alpha()
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
-        pygame.draw.circle(self.surf, c.PURPLE, (int(self.radius), int(self.radius)), int(self.radius))
+        if prev_alpha is not None:
+            lighten = 50 * prev_alpha/255
+        else:
+            lighten = 100
+        color = min(255, c.PURPLE[0] + lighten), min(255, c.PURPLE[1] + lighten), min(255, c.PURPLE[2] + lighten)
+        pygame.draw.circle(self.surf, color, (int(self.radius), int(self.radius)), int(self.radius))
         self.surf.set_colorkey(c.BLACK)
         self.surf.set_alpha(prev_alpha)
 

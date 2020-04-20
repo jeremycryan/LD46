@@ -35,3 +35,7 @@ def font_path(rel):
 
 def audio_path(rel):
     return "assets/audio/" + rel
+
+
+def meta_path(rel):
+    return "assets/meta/" + rel
